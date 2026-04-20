@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a3a5c">
+<title>ระบบจองวัน MOD</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f2f4f7; color: #1a1a2e; font-size: 15px; min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; padding: 12px 12px 80px; }
+  .header { background: #1a3a5c; color: white; border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header p { font-size: 12px; opacity: 0.75; margin-top: 3px; }
+  .tab-bar { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 10px 6px; border: 1px solid #dde3ec; border-radius: 10px; background: white; font-size: 13px; cursor: pointer; text-align: center; color: #666; font-weight: 500; }
+  .tab.active { background: #1a3a5c; color: white; border-color: #1a3a5c; }
+  .card { background: white; border: 1px solid #e8ecf2; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #1a1a2e; }
+  select, input[type=text], input[type=password] {
+    width: 100%; padding: 11px 13px; border: 1px solid #dde3ec; border-radius: 10px;
+    background: #f8f9fc; color: #1a1a2e; font-size: 15px; margin-bottom: 10px;
+    -webkit-appearance: none; appearance: none;
+  }
+  select:focus, input:focus { outline: none; border-color: #1a3a5c; background: white; }
+  .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 8px; transition: opacity 0.15s; }
+  .btn:active { opacity: 0.8; }
+  .btn-primary { background: #1a3a5c; color: white; }
+  .btn-danger { background: #c0392b; color: white; }
+  .btn-success { background: #1e7e5e; color: white; }
+  .btn-outline { background: white; border: 1px solid #dde3ec; color: #444; }
+  .btn-sm { width: auto; padding: 7px 14px; font-size: 13px; margin-bottom: 0; border-radius: 8px; }
+  .who-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .who-bar label { font-size: 13px; color: #666; white-space: nowrap; font-weight: 600; }
+  .who-bar select { margin-bottom: 0; flex: 1; }
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .month-nav button { background: #f2f4f7; border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer; color: #1a3a5c; font-size: 20px; font-weight: 700; }
+  .month-nav span { font-weight: 700; font-size: 15px; color: #1a3a5c; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .day-label { text-align: center; font-size: 11px; color: #999; padding: 4px 0; font-weight: 700; }
+  .day-cell {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; border-radius: 8px; font-size: 13px; cursor: pointer;
+    position: relative; border: 1.5px solid transparent; min-height: 40px; font-weight: 500;
+  }
+  .day-cell.empty { cursor: default; }
+  .day-cell.available { background: #f8f9fc; }
+  .day-cell.available:active { background: #dce8f5; }
+  .day-cell.selected { background: #d4e6f7; border-color: #1a3a5c; color: #1a3a5c; font-weight: 700; }
+  .day-cell.booked-mine { background: #1a3a5c; color: white; }
+  .day-cell.booked-other { background: #e74c3c; color: white; cursor: not-allowed; }
+  .day-cell.today { border-color: #aac4e0; }
+  .day-cell.past { opacity: 0.3; cursor: not-allowed; }
+  .day-cell .dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.8); position: absolute; bottom: 4px; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: #888; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 4px; }
+  .booking-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid #e8ecf2; border-radius: 10px; margin-bottom: 8px; background: #fafbfd; }
+  .user-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f8f9fc; border-radius: 10px; margin-bottom: 8px; }
+  .msg { padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 10px; font-weight: 600; }
+  .msg-success { background: #d4edda; color: #155724; }
+  .msg-error { background: #f8d7da; color: #721c24; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #1a3a5c; color: white; padding: 10px; text-align: left; font-weight: 700; }
+  td { padding: 9px 10px; border-bottom: 1px solid #f0f2f6; }
+  tr:nth-child(even) td { background: #fafbfd; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-card { background: #f0f5fb; border-radius: 12px; padding: 12px; text-align: center; }
+  .stat-num { font-size: 26px; font-weight: 700; color: #1a3a5c; }
+  .stat-label { font-size: 11px; color: #666; margin-top: 2px; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .filter-row select { margin-bottom: 0; }
+  .confirm-section { margin-top: 14px; border-top: 1px solid #e8ecf2; padding-top: 14px; }
+  .selected-dates-list { font-size: 13px; color: #1a3a5c; margin-bottom: 12px; line-height: 2; }
+  .action-btns { display: flex; gap: 8px; }
+  .action-btns .btn { margin-bottom: 0; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 20px; }
+  .modal-box { background: white; border-radius: 18px; padding: 24px; width: 100%; max-width: 340px; }
+  .modal-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .modal-box p { font-size: 13px; color: #888; margin-bottom: 16px; }
+  .nouser-card { background: white; border-radius: 14px; padding: 30px 20px; text-align: center; color: #aaa; font-size: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .sync-badge { display: inline-block; background: #d4edda; color: #155724; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-left: 4px; }
+  .offline-badge { display: inline-block; background: #f8d7da; color: #721c24; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-left: 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>📅 ระบบจองวัน MOD</h1>
+    <p id="headerSub">เลือกชื่อของคุณเพื่อเริ่มจอง</p>
+  </div>
+  <div class="who-bar">
+    <label>ฉันคือ:</label>
+    <select id="whoAmI" onchange="onUserChange()">
+      <option value="">-- เลือกชื่อ --</option>
+    </select>
+  </div>
+  <div id="mainContent" style="display:none">
+    <div class="tab-bar" id="tabBar"></div>
+    <div id="tabContent"></div>
+  </div>
+  <div id="noUserMsg" class="nouser-card">
+    <div style="font-size:40px;margin-bottom:10px">👆</div>
+    กรุณาเลือกชื่อของคุณด้านบน
+  </div>
+</div>
+
+<div class="modal-bg" id="adminModal" style="display:none">
+  <div class="modal-box">
+    <h3>🔐 เข้าสู่โหมด Admin</h3>
+    <p>กรุณากรอกรหัสผ่านผู้ดูแลระบบ</p>
+    <div id="msgAdminModal"></div>
+    <input type="password" id="adminPassInput" placeholder="รหัสผ่าน Admin" onkeydown="if(event.key==='Enter')checkAdminPass()" />
+    <button class="btn btn-primary" onclick="checkAdminPass()">ยืนยัน</button>
+    <button class="btn btn-outline" onclick="closeAdminModal()">ยกเลิก</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="editUserModal" style="display:none">
+  <div class="modal-box">
+    <h3>✏️ แก้ไขข้อมูลผู้ใช้</h3>
+    <p>แก้ไขชื่อและแผนกของผู้ใช้</p>
+    <div id="msgEditUser"></div>
+    <input type="hidden" id="editUserId" />
+    <input type="text" id="editUserName" placeholder="ชื่อ-นามสกุล" onkeydown="if(event.key==='Enter')saveEditUser()" />
+    <input type="text" id="editUserDept" placeholder="แผนก" onkeydown="if(event.key==='Enter')saveEditUser()" />
+    <button class="btn btn-primary" onclick="saveEditUser()">💾 บันทึก</button>
+    <button class="btn btn-outline" onclick="closeEditUserModal()">ยกเลิก</button>
+  </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ✅ Firebase Config — ใส่ค่าจริงแล้ว
+const firebaseConfig = {
+  apiKey: "AIzaSyCyrdB3-xvsk6kIhMf-JmK-R07aqf2Sz4I",
+  authDomain: "mod-booking.firebaseapp.com",
+  databaseURL: "https://mod-booking-default-rtdb.firebaseio.com",
+  projectId: "mod-booking",
+  storageBucket: "mod-booking.firebasestorage.app",
+  messagingSenderId: "614139573903",
+  appId: "1:614139573903:web:5f4cf077bd86a6f88a62fa",
+  measurementId: "G-S7YK6DWFTR"
+};
+
+const ADMIN_PASS = 'orawan123';
+
+let db, dbUsers, dbBookings;
+let localData = { users: [], bookings: [] };
+let currentUser = null;
+let currentView = 'calendar';
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let filterUser = 'all';
+let filterMonth = 'all';
+let adminUnlocked = false;
+let pendingDates = [];
+let isOnline = false;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  dbUsers = db.ref('users');
+  dbBookings = db.ref('bookings');
+  isOnline = true;
+
+  dbUsers.on('value', snap => {
+    const val = snap.val();
+    if (val) {
+      localData.users = Object.entries(val).map(([id, u]) => ({ ...u, id }));
+    } else {
+      const defaults = [
+        { name: 'Admin', role: 'admin', dept: 'ผู้ดูแลระบบ' },
+        { name: 'สมชาย ใจดี', role: 'user', dept: 'แผนกการตลาด' },
+        { name: 'วิภา รักงาน', role: 'user', dept: 'แผนกบัญชี' },
+        { name: 'ประเสริฐ สุขใจ', role: 'user', dept: 'แผนก HR' },
+      ];
+      defaults.forEach(u => dbUsers.push(u));
+    }
+    populateWho();
+    if (currentUser && currentView) renderTab(currentView);
+  });
+
+  dbBookings.on('value', snap => {
+    const val = snap.val();
+    localData.bookings = val ? Object.entries(val).map(([id, b]) => ({ ...b, _fbId: id })) : [];
+    if (currentUser && currentView) renderTab(currentView);
+  });
+
+  document.getElementById('headerSub').innerHTML = 'เลือกชื่อของคุณเพื่อเริ่มจอง <span class="sync-badge">🟢 ออนไลน์</span>';
+} catch(e) {
+  isOnline = false;
+  document.getElementById('headerSub').innerHTML = 'เลือกชื่อของคุณเพื่อเริ่มจอง <span class="offline-badge">⚠️ ออฟไลน์</span>';
+  const saved = localStorage.getItem('mod_local');
+  if (saved) localData = JSON.parse(saved);
+  else localData.users = [
+    { id:'1', name:'Admin', role:'admin', dept:'ผู้ดูแลระบบ' },
+    { id:'2', name:'สมชาย ใจดี', role:'user', dept:'แผนกการตลาด' },
+    { id:'3', name:'วิภา รักงาน', role:'user', dept:'แผนกบัญชี' },
+    { id:'4', name:'ประเสริฐ สุขใจ', role:'user', dept:'แผนก HR' },
+  ];
+  populateWho();
+}
+
+function saveLocal() { localStorage.setItem('mod_local', JSON.stringify(localData)); }
+
+function populateWho() {
+  const sel = document.getElementById('whoAmI');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- เลือกชื่อ --</option>';
+  localData.users.forEach(u => {
+    sel.innerHTML += `<option value="${u.id}" ${cur==u.id?'selected':''}>${u.name}${u.role==='admin'?' (Admin)':''}</option>`;
+  });
+}
+
+function onUserChange() {
+  const uid = document.getElementById('whoAmI').value;
+  const selected = localData.users.find(u => String(u.id) === String(uid));
+  if (!selected) {
+    currentUser = null; pendingDates = [];
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('noUserMsg').style.display = 'block';
+    return;
+  }
+  if (selected.role === 'admin' && !adminUnlocked) {
+    document.getElementById('adminModal').style.display = 'flex';
+    document.getElementById('adminPassInput').value = '';
+    setTimeout(() => document.getElementById('adminPassInput').focus(), 200);
+    return;
+  }
+  setCurrentUser(selected);
+}
+
+function checkAdminPass() {
+  const val = document.getElementById('adminPassInput').value;
+  if (val === ADMIN_PASS) {
+    adminUnlocked = true; closeAdminModal();
+    const uid = document.getElementById('whoAmI').value;
+    setCurrentUser(localData.users.find(u => String(u.id) === String(uid)));
+  } else {
+    document.getElementById('msgAdminModal').innerHTML = '<div class="msg msg-error">รหัสผ่านไม่ถูกต้อง</div>';
+    document.getElementById('whoAmI').value = '';
+  }
+}
+
+function closeAdminModal() {
+  document.getElementById('adminModal').style.display = 'none';
+  document.getElementById('msgAdminModal').innerHTML = '';
+}
+
+function setCurrentUser(user) {
+  currentUser = user; pendingDates = [];
+  document.getElementById('mainContent').style.display = 'block';
+  document.getElementById('noUserMsg').style.display = 'none';
+  document.getElementById('headerSub').innerHTML = user.name + ' · ' + user.dept +
+    (isOnline ? ' <span class="sync-badge">🟢 ออนไลน์</span>' : ' <span class="offline-badge">⚠️ ออฟไลน์</span>');
+  currentView = 'calendar';
+  setupTabs(); renderTab('calendar');
+}
+
+function setupTabs() {
+  const bar = document.getElementById('tabBar');
+  bar.innerHTML = currentUser.role === 'admin'
+    ? `<div class="tab active" onclick="switchTab('calendar',this)">ปฏิทิน</div>
+       <div class="tab" onclick="switchTab('table',this)">ตาราง</div>
+       <div class="tab" onclick="switchTab('users',this)">จัดการ</div>`
+    : `<div class="tab active" onclick="switchTab('calendar',this)">จองวัน</div>
+       <div class="tab" onclick="switchTab('table',this)">ตาราง</div>`;
+}
+
+function switchTab(view, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentView = view;
+  if (view !== 'calendar') pendingDates = [];
+  renderTab(view);
+}
+
+function renderTab(view) {
+  if (view === 'calendar') renderCalendar();
+  else if (view === 'table') renderTable();
+  else if (view === 'users') renderUsers();
+}
+
+function renderCalendar() {
+  const today = new Date();
+  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const dayLabels = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  let cells = '';
+  for (let i = 0; i < firstDay; i++) cells += '<div class="day-cell empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const booking = localData.bookings.find(b => b.date === dateStr);
+    const isPending = pendingDates.includes(dateStr);
+    const isPast = new Date(calYear, calMonth, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+    let cls = 'day-cell'; let dot = ''; let onclick = '';
+
+    if (isPast && currentUser.role !== 'admin') {
+      cls += ' past';
+    } else if (booking) {
+      if (String(booking.userId) === String(currentUser.id)) {
+        cls += ' booked-mine'; dot = '<div class="dot"></div>';
+        onclick = "cancelBooking('" + dateStr + "')";
+      } else {
+        cls += ' booked-other';
+        if (currentUser.role === 'admin') onclick = "cancelBooking('" + dateStr + "')";
+      }
+    } else if (isPending) {
+      cls += ' selected'; onclick = "togglePending('" + dateStr + "')";
+    } else {
+      cls += ' available'; onclick = "togglePending('" + dateStr + "')";
+    }
+    if (isToday) cls += ' today';
+    cells += '<div class="' + cls + '" ' + (onclick ? 'onclick="' + onclick + '"' : '') + '>' + d + dot + '</div>';
+  }
+
+  let confirmSection = '';
+  if (pendingDates.length > 0) {
+    const dateList = pendingDates.sort().map(d => '• ' + formatDateTH(d)).join('<br>');
+    confirmSection = `
+      <div class="confirm-section">
+        <div style="font-size:12px;color:#888;margin-bottom:8px;font-weight:700">วันที่เลือก (${pendingDates.length} วัน)</div>
+        <div class="selected-dates-list">${dateList}</div>
+        <div class="action-btns">
+          <button class="btn btn-outline" onclick="clearPending()">ล้างการเลือก</button>
+          <button class="btn btn-danger" onclick="confirmBooking()">✓ ยืนยันการจอง</button>
+        </div>
+      </div>`;
+  }
+
+  const myBookings = localData.bookings.filter(b => String(b.userId) === String(currentUser.id)).sort((a,b) => a.date.localeCompare(b.date));
+  let myList = myBookings.length === 0
+    ? '<p style="font-size:13px;color:#aaa;text-align:center;padding:16px">ยังไม่มีการจอง</p>'
+    : myBookings.map(b => `<div class="booking-row"><div style="font-weight:700;font-size:14px">${formatDateTH(b.date)}</div><button class="btn btn-danger btn-sm" onclick="cancelBooking('${b.date}')">ยกเลิก</button></div>`).join('');
+
+  document.getElementById('tabContent').innerHTML = `
+    <div id="msgCalendar"></div>
+    <div class="card">
+      <div class="month-nav">
+        <button onclick="changeMonth(-1)">&#8249;</button>
+        <span>${monthNames[calMonth]} ${calYear+543}</span>
+        <button onclick="changeMonth(1)">&#8250;</button>
+      </div>
+      <div class="calendar-grid">
+        ${dayLabels.map(d => '<div class="day-label">' + d + '</div>').join('')}
+        ${cells}
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#d4e6f7;border:2px solid #1a3a5c"></div>เลือกแล้ว</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1a3a5c"></div>จองแล้ว</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div>ถูกจองแล้ว</div>
+      </div>
+      ${confirmSection}
+    </div>
+    <div class="card">
+      <h3>วันที่คุณจอง (${myBookings.length} วัน)</h3>
+      ${myList}
+    </div>`;
+}
+
+function togglePending(dateStr) {
+  if (localData.bookings.find(b => b.date === dateStr)) return;
+  const idx = pendingDates.indexOf(dateStr);
+  if (idx === -1) pendingDates.push(dateStr); else pendingDates.splice(idx, 1);
+  renderCalendar();
+}
+
+function clearPending() { pendingDates = []; renderCalendar(); }
+
+function confirmBooking() {
+  if (pendingDates.length === 0) return;
+  const conflicts = pendingDates.filter(d => localData.bookings.find(b => b.date === d));
+  if (conflicts.length > 0) {
+    showMsg('msgCalendar', 'error', 'วัน ' + conflicts.map(d => formatDateTH(d)).join(', ') + ' ถูกจองไปแล้ว');
+    pendingDates = pendingDates.filter(d => !conflicts.includes(d));
+    renderCalendar(); return;
+  }
+  const count = pendingDates.length;
+  if (isOnline && dbBookings) {
+    pendingDates.forEach(dateStr => {
+      dbBookings.push({ date: dateStr, userId: String(currentUser.id), userName: currentUser.name, dept: currentUser.dept, createdAt: new Date().toISOString() });
+    });
+  } else {
+    pendingDates.forEach(dateStr => {
+      localData.bookings.push({ date: dateStr, userId: String(currentUser.id), userName: currentUser.name, dept: currentUser.dept, createdAt: new Date().toISOString() });
+    });
+    saveLocal();
+  }
+  pendingDates = [];
+  showMsg('msgCalendar', 'success', 'จองสำเร็จ ' + count + ' วัน! 🎉');
+  if (!isOnline) renderCalendar();
+}
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+function cancelBooking(dateStr) {
+  const booking = localData.bookings.find(b => b.date === dateStr);
+  if (!booking) return;
+  if (currentUser.role !== 'admin' && String(booking.userId) !== String(currentUser.id)) {
+    showMsg('msgCalendar', 'error', 'ไม่มีสิทธิ์ยกเลิกการจองของผู้อื่น'); return;
+  }
+  if (!confirm('ยกเลิกการจองวัน ' + formatDateTH(dateStr) + ' ของ ' + booking.userName + '?')) return;
+  if (isOnline && dbBookings && booking._fbId) {
+    dbBookings.child(booking._fbId).remove();
+  } else {
+    localData.bookings = localData.bookings.filter(b => b.date !== dateStr);
+    saveLocal(); renderCalendar();
+  }
+}
+
+function renderTable() {
+  const monthNames = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const availableMonths = [...new Set(localData.bookings.map(b => b.date.slice(0,7)))].sort();
+  let filtered = currentUser.role !== 'admin'
+    ? localData.bookings.filter(b => String(b.userId) === String(currentUser.id))
+    : [...localData.bookings];
+  if (filterUser !== 'all' && currentUser.role === 'admin') filtered = filtered.filter(b => String(b.userId) === String(filterUser));
+  if (filterMonth !== 'all') filtered = filtered.filter(b => b.date.startsWith(filterMonth));
+  filtered.sort((a,b) => a.date.localeCompare(b.date));
+
+  const userOpts = localData.users.filter(u => u.role !== 'admin').map(u => '<option value="' + u.id + '" ' + (filterUser == u.id ? 'selected' : '') + '>' + u.name + '</option>').join('');
+  const monthOpts = availableMonths.map(m => { const [y,mo] = m.split('-'); return '<option value="' + m + '" ' + (filterMonth === m ? 'selected' : '') + '>' + monthNames[parseInt(mo)-1] + ' ' + (parseInt(y)+543) + '</option>'; }).join('');
+
+  const adminFilters = currentUser.role === 'admin' ? `
+    <div class="filter-row">
+      <select onchange="filterUser=this.value;renderTab('table')"><option value="all">ทุกคน</option>${userOpts}</select>
+      <select onchange="filterMonth=this.value;renderTab('table')"><option value="all">ทุกเดือน</option>${monthOpts}</select>
+    </div>` : '';
+
+  const stats = currentUser.role === 'admin' ? `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">${localData.bookings.length}</div><div class="stat-label">จองทั้งหมด</div></div>
+      <div class="stat-card"><div class="stat-num">${[...new Set(localData.bookings.map(b => b.userId))].length}</div><div class="stat-label">คนที่มีการจอง</div></div>
+    </div>` : `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">${localData.bookings.filter(b => String(b.userId) === String(currentUser.id)).length}</div><div class="stat-label">วันที่คุณจอง</div></div>
+    </div>`;
+
+  const rows = filtered.length === 0
+    ? '<tr><td colspan="3" style="text-align:center;color:#aaa;padding:20px">ไม่มีข้อมูล</td></tr>'
+    : filtered.map((b,i) => '<tr><td>' + (i+1) + '</td><td>' + formatDateTH(b.date) + '</td><td>' + b.userName + '</td></tr>').join('');
+
+  window._csvContent = 'วันที่,ชื่อ,แผนก\n' + filtered.map(b => formatDateTH(b.date) + ',' + b.userName + ',' + b.dept).join('\n');
+
+  document.getElementById('tabContent').innerHTML = `
+    ${stats}${adminFilters}
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="margin-bottom:0">ตารางการจอง (${filtered.length} รายการ)</h3>
+        <button class="btn btn-success btn-sm" onclick="exportCSV()">⬇ Excel</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr><th>#</th><th>วันที่</th><th>ชื่อ</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+    </div>`;
+}
+
+function exportCSV() {
+  const blob = new Blob(['\uFEFF' + window._csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'MOD_Booking_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function renderUsers() {
+  const nonAdmins = localData.users.filter(u => u.role !== 'admin');
+  const rows = nonAdmins.map(u => `
+    <div class="user-row">
+      <div>
+        <div style="font-size:14px;font-weight:700">${u.name}</div>
+        <div style="font-size:12px;color:#888">${u.dept}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" style="background:#e8f0fe;color:#1a3a5c;border:1px solid #c5d5f0" onclick="openEditUser('${u.id}')">✏️ แก้ไข</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">ลบ</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('tabContent').innerHTML = `
+    <div id="msgUsers"></div>
+    <div class="card">
+      <h3>เพิ่มผู้ใช้ใหม่</h3>
+      <input type="text" id="newName" placeholder="ชื่อ-นามสกุล" />
+      <input type="text" id="newDept" placeholder="แผนก" />
+      <button class="btn btn-primary" onclick="addUser()">+ เพิ่มผู้ใช้</button>
+    </div>
+    <div class="card">
+      <h3>รายชื่อผู้ใช้ (${nonAdmins.length} คน)</h3>
+      ${rows || '<p style="font-size:13px;color:#aaa;text-align:center;padding:16px">ยังไม่มีผู้ใช้</p>'}
+    </div>
+    <div class="card">
+      <h3>ล้างข้อมูล</h3>
+      <button class="btn btn-danger btn-outline" onclick="clearAllBookings()">ล้างการจองทั้งหมด</button>
+    </div>`;
+}
+
+function addUser() {
+  const name = document.getElementById('newName').value.trim();
+  const dept = document.getElementById('newDept').value.trim();
+  if (!name || !dept) { showMsg('msgUsers', 'error', 'กรุณากรอกชื่อและแผนก'); return; }
+  if (isOnline && dbUsers) {
+    dbUsers.push({ name, role: 'user', dept });
+  } else {
+    localData.users.push({ id: String(Date.now()), name, role: 'user', dept });
+    saveLocal(); populateWho();
+  }
+  showMsg('msgUsers', 'success', 'เพิ่ม ' + name + ' สำเร็จ! ✓');
+  document.getElementById('newName').value = '';
+  document.getElementById('newDept').value = '';
+  if (!isOnline) renderUsers();
+}
+
+function deleteUser(id) {
+  const user = localData.users.find(u => String(u.id) === String(id));
+  if (!confirm('ลบ ' + user.name + ' และการจองทั้งหมดของเขา/เธอ?')) return;
+  if (isOnline && dbUsers) {
+    dbUsers.child(id).remove();
+    localData.bookings.filter(b => String(b.userId) === String(id)).forEach(b => {
+      if (b._fbId) dbBookings.child(b._fbId).remove();
+    });
+  } else {
+    localData.users = localData.users.filter(u => String(u.id) !== String(id));
+    localData.bookings = localData.bookings.filter(b => String(b.userId) !== String(id));
+    saveLocal(); populateWho(); renderUsers();
+  }
+}
+
+function clearAllBookings() {
+  if (!confirm('ล้างการจองทั้งหมด? ไม่สามารถยกเลิกได้')) return;
+  if (isOnline && dbBookings) {
+    dbBookings.remove();
+  } else {
+    localData.bookings = []; saveLocal(); renderUsers();
+  }
+}
+
+function openEditUser(id) {
+  const user = localData.users.find(u => String(u.id) === String(id));
+  if (!user) return;
+  document.getElementById('editUserId').value = user.id;
+  document.getElementById('editUserName').value = user.name;
+  document.getElementById('editUserDept').value = user.dept;
+  document.getElementById('editUserModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('editUserName').focus(), 200);
+}
+
+function closeEditUserModal() {
+  document.getElementById('editUserModal').style.display = 'none';
+  document.getElementById('msgEditUser').innerHTML = '';
+}
+
+function saveEditUser() {
+  const id = document.getElementById('editUserId').value;
+  const name = document.getElementById('editUserName').value.trim();
+  const dept = document.getElementById('editUserDept').value.trim();
+  if (!name || !dept) {
+    document.getElementById('msgEditUser').innerHTML = '<div class="msg msg-error">กรุณากรอกชื่อและแผนก</div>';
+    return;
+  }
+  if (isOnline && dbUsers) {
+    dbUsers.child(id).update({ name, dept });
+    // Update existing bookings for this user
+    localData.bookings.filter(b => String(b.userId) === String(id)).forEach(b => {
+      if (b._fbId) dbBookings.child(b._fbId).update({ userName: name, dept });
+    });
+  } else {
+    const user = localData.users.find(u => String(u.id) === String(id));
+    if (user) { user.name = name; user.dept = dept; }
+    localData.bookings.filter(b => String(b.userId) === String(id)).forEach(b => {
+      b.userName = name; b.dept = dept;
+    });
+    saveLocal(); populateWho();
+    if (currentUser && String(currentUser.id) === String(id)) {
+      currentUser.name = name; currentUser.dept = dept;
+    }
+  }
+  closeEditUserModal();
+  showMsg('msgUsers', 'success', 'แก้ไขข้อมูล ' + name + ' สำเร็จ! ✓');
+  if (!isOnline) renderUsers();
+}
+
+function showMsg(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '<div class="msg msg-' + type + '">' + msg + '</div>';
+  setTimeout(() => { if (el) el.innerHTML = ''; }, 3500);
+}
+
+function formatDateTH(dateStr) {
+  const [y,m,d] = dateStr.split('-');
+  const mn = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return parseInt(d) + ' ' + mn[parseInt(m)-1] + ' ' + (parseInt(y)+543);
+}
+
+populateWho();
+</script>
+</body>
+</html>
